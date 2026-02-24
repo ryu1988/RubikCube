@@ -1,325 +1,253 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Rubik Net — 6-face always visible</title>
-  <style>
-    :root{
-      --bg0:#0b1020;
-      --bg1:#0a1633;
-      --panel: rgba(255,255,255,0.06);
-      --panel2: rgba(255,255,255,0.10);
-      --line: rgba(255,255,255,0.10);
-      --txt: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.70);
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rubik Net+ — linked edges</title>
+<style>
+  :root{
+    --bg0:#0b1020; --bg1:#0a1633;
+    --panel: rgba(255,255,255,0.06);
+    --line: rgba(255,255,255,0.10);
+    --txt: rgba(255,255,255,0.92);
+    --muted: rgba(255,255,255,0.70);
 
-      --U:#f4f6fb; /* white */
-      --D:#ffd44d; /* yellow */
-      --F:#36d28a; /* green */
-      --B:#4ea3ff; /* blue */
-      --L:#ff8a3d; /* orange */
-      --R:#ff4d5e; /* red */
+    --U:#f4f6fb; --D:#ffd44d; --F:#36d28a;
+    --B:#4ea3ff; --L:#ff8a3d; --R:#ff4d5e;
 
-      --sticker-gap: 10px;
-      --face-gap: 18px;
-      --radius: 18px;
-    }
+    --sticker-gap: 10px;
+    --face-gap: 18px;
+    --radius: 18px;
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif;
-      color:var(--txt);
-      background:
-        radial-gradient(1200px 600px at 15% 10%, #2443aa33, transparent 60%),
-        radial-gradient(900px 700px at 90% 20%, #ff4d5e22, transparent 55%),
-        radial-gradient(800px 800px at 60% 90%, #36d28a22, transparent 60%),
-        linear-gradient(160deg, var(--bg0), var(--bg1));
-      overflow-x:hidden;
-    }
+    --glow: 0 0 0 3px rgba(255,255,255,0.18), 0 0 24px rgba(78,163,255,0.22);
+    --edgeGlow: 0 0 0 3px rgba(78,163,255,0.30), 0 0 26px rgba(78,163,255,0.35);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif;
+    color:var(--txt);
+    background:
+      radial-gradient(1200px 600px at 15% 10%, #2443aa33, transparent 60%),
+      radial-gradient(900px 700px at 90% 20%, #ff4d5e22, transparent 55%),
+      radial-gradient(800px 800px at 60% 90%, #36d28a22, transparent 60%),
+      linear-gradient(160deg, var(--bg0), var(--bg1));
+  }
+  .wrap{
+    max-width: 1220px;
+    margin:0 auto;
+    padding: 26px 18px 40px;
+    display:grid;
+    grid-template-columns: 1.25fr 0.75fr;
+    gap: 18px;
+    align-items:start;
+  }
+  header{grid-column:1/-1; display:flex; justify-content:space-between; gap:14px; align-items:flex-end}
+  h1{margin:0; font-size:22px; font-weight:720}
+  .sub{margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.55}
+  .pill{padding:8px 10px; border:1px solid var(--line); background:var(--panel); border-radius:999px; font-size:12px; color:var(--muted); backdrop-filter: blur(10px)}
+  .pillbar{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end}
 
-    .wrap{
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 28px 18px 40px;
-      display:grid;
-      grid-template-columns: 1.2fr 0.8fr;
-      gap: 18px;
-      align-items:start;
-    }
+  .card{
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, var(--panel), rgba(255,255,255,0.03));
+    border-radius: var(--radius);
+    box-shadow: 0 20px 80px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.05) inset;
+    backdrop-filter: blur(12px);
+  }
 
-    header{
-      grid-column: 1 / -1;
-      display:flex;
-      justify-content:space-between;
-      gap: 16px;
-      align-items:flex-end;
-      padding: 10px 4px 0;
-    }
-    .title{
-      display:flex; flex-direction:column; gap:6px;
-    }
-    .title h1{
-      margin:0;
-      font-size: 22px;
-      letter-spacing: 0.2px;
-      font-weight: 720;
-    }
-    .title p{
-      margin:0;
-      color:var(--muted);
-      font-size: 13px;
-      line-height:1.5;
-    }
-    .pillbar{
-      display:flex; gap:10px; flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .pill{
-      padding: 8px 10px;
-      border: 1px solid var(--line);
-      background: var(--panel);
-      border-radius: 999px;
-      font-size: 12px;
-      color: var(--muted);
-      backdrop-filter: blur(10px);
-    }
+  .stage{ position:relative; padding: 14px; }
+  /* SVG overlay for edge links */
+  #links{
+    position:absolute; inset: 0;
+    width:100%; height:100%;
+    pointer-events:none;
+    opacity:0.9;
+  }
+  .link{
+    stroke: rgba(78,163,255,0.30);
+    stroke-width: 2;
+    fill: none;
+    filter: drop-shadow(0 0 10px rgba(78,163,255,0.20));
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+  .link.on{ opacity: 1; }
 
-    .card{
-      border: 1px solid var(--line);
-      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,0.03));
-      border-radius: var(--radius);
-      box-shadow:
-        0 20px 80px rgba(0,0,0,0.35),
-        0 1px 0 rgba(255,255,255,0.05) inset;
-      backdrop-filter: blur(12px);
-    }
-    .card .inner{ padding: 18px; }
+  .net{
+    display:grid;
+    grid-template-columns: repeat(4, auto);
+    grid-template-rows: repeat(3, auto);
+    gap: var(--face-gap);
+    justify-content:center;
+    padding: 18px 10px 22px;
+    position:relative;
+    z-index:1;
+  }
 
-    /* NET layout */
-    .net{
-      display:grid;
-      grid-template-columns: repeat(4, auto);
-      grid-template-rows: repeat(3, auto);
-      gap: var(--face-gap);
-      justify-content:center;
-      padding: 22px 18px 24px;
-    }
-    .face{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--sticker-gap);
-      padding: 14px;
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,0.18);
-      position:relative;
-      width: 210px;
-    }
-    .face::before{
-      content: attr(data-face);
-      position:absolute;
-      top: 10px; left: 12px;
-      font-size: 11px;
-      letter-spacing: 0.9px;
-      color: rgba(255,255,255,0.62);
-      text-transform: uppercase;
-    }
-    .sticker{
-      border-radius: 14px;
-      height: 46px;
-      border: 1px solid rgba(255,255,255,0.10);
-      box-shadow:
-        0 10px 24px rgba(0,0,0,0.35),
-        0 1px 0 rgba(255,255,255,0.12) inset;
-      transform: translateZ(0);
-      transition: transform .12s ease, filter .12s ease;
-    }
-    .face:hover .sticker{ filter: saturate(1.08) contrast(1.02); }
-    .sticker:hover{ transform: translateY(-2px); }
+  .face{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sticker-gap);
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: rgba(0,0,0,0.18);
+    position:relative;
+    width: 210px;
+    box-shadow: 0 0 0 0 rgba(78,163,255,0);
+    transition: box-shadow .12s ease, transform .12s ease;
+  }
+  .face::before{
+    content: attr(data-face);
+    position:absolute;
+    top: 10px; left: 12px;
+    font-size: 11px;
+    letter-spacing: 0.9px;
+    color: rgba(255,255,255,0.62);
+    text-transform: uppercase;
+  }
+  .face.focus{ box-shadow: var(--glow); transform: translateY(-1px); }
 
-    .pos-U{ grid-column: 2; grid-row: 1; }
-    .pos-L{ grid-column: 1; grid-row: 2; }
-    .pos-F{ grid-column: 2; grid-row: 2; }
-    .pos-R{ grid-column: 3; grid-row: 2; }
-    .pos-B{ grid-column: 4; grid-row: 2; }
-    .pos-D{ grid-column: 2; grid-row: 3; }
+  .sticker{
+    border-radius: 14px;
+    height: 46px;
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.12) inset;
+    transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+  }
+  .sticker.edgeOn{ box-shadow: var(--edgeGlow); }
+  .sticker:hover{ transform: translateY(-2px); }
 
-    /* Right panel */
-    .side{
-      padding: 18px;
-      display:flex;
-      flex-direction:column;
-      gap: 14px;
-    }
-    .section h2{
-      margin:0 0 8px;
-      font-size: 13px;
-      letter-spacing: 0.6px;
-      color: rgba(255,255,255,0.80);
-      font-weight: 700;
-    }
-    .controls{
-      display:flex;
-      flex-wrap:wrap;
-      gap: 8px;
-    }
-    button{
-      cursor:pointer;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,0.06);
-      color: var(--txt);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 13px;
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
-      user-select:none;
-      backdrop-filter: blur(10px);
-    }
-    button:hover{
-      transform: translateY(-1px);
-      background: rgba(255,255,255,0.10);
-      border-color: rgba(255,255,255,0.18);
-    }
-    button:active{ transform: translateY(0px) scale(0.99); }
-    .btn-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  /* face positions */
+  .pos-U{ grid-column: 2; grid-row: 1; }
+  .pos-L{ grid-column: 1; grid-row: 2; }
+  .pos-F{ grid-column: 2; grid-row: 2; }
+  .pos-R{ grid-column: 3; grid-row: 2; }
+  .pos-B{ grid-column: 4; grid-row: 2; }
+  .pos-D{ grid-column: 2; grid-row: 3; }
 
-    .textarea{
-      width: 100%;
-      min-height: 84px;
-      resize: vertical;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: rgba(0,0,0,0.22);
-      color: var(--txt);
-      padding: 10px 12px;
-      font-size: 13px;
-      outline: none;
-    }
-    .textarea:focus{
-      border-color: rgba(255,255,255,0.22);
-      box-shadow: 0 0 0 4px rgba(78,163,255,0.12);
-    }
-    .meta{
-      display:flex; justify-content:space-between; gap:10px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-    .kbd{
-      padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
-      color: rgba(255,255,255,0.78);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 11px;
-    }
+  /* edge hit areas */
+  .edgeHit{
+    position:absolute;
+    border-radius: 14px;
+    /* debug: background: rgba(255,255,255,0.04); */
+  }
+  .edgeHit:hover{ outline: 2px solid rgba(78,163,255,0.35); outline-offset: 2px; }
+  /* top/right/bottom/left strips around sticker grid */
+  .edge-top{ left:14px; right:14px; top:14px; height: 46px; }
+  .edge-bottom{ left:14px; right:14px; bottom:14px; height: 46px; }
+  .edge-left{ left:14px; top:14px; bottom:14px; width: 46px; }
+  .edge-right{ right:14px; top:14px; bottom:14px; width: 46px; }
 
-    .toast{
-      position: fixed;
-      bottom: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 12px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.55);
-      border: 1px solid rgba(255,255,255,0.14);
-      color: rgba(255,255,255,0.88);
-      font-size: 12px;
-      opacity: 0;
-      pointer-events:none;
-      transition: opacity .18s ease, transform .18s ease;
-      backdrop-filter: blur(10px);
-    }
-    .toast.show{ opacity:1; transform: translateX(-50%) translateY(-4px); }
+  .side{ padding: 18px; display:flex; flex-direction:column; gap: 14px; }
+  h2{ margin:0 0 8px; font-size:13px; letter-spacing:.6px; color: rgba(255,255,255,0.80); font-weight: 700; }
+  .controls{ display:flex; flex-wrap:wrap; gap: 8px; }
+  button{
+    cursor:pointer;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.06);
+    color: var(--txt);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    user-select:none;
+    backdrop-filter: blur(10px);
+  }
+  button:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.18); }
+  button:active{ transform: translateY(0px) scale(0.99); }
+  .textarea{
+    width: 100%; min-height: 84px; resize: vertical;
+    border-radius: 14px; border: 1px solid var(--line);
+    background: rgba(0,0,0,0.22); color: var(--txt);
+    padding: 10px 12px; font-size: 13px; outline: none;
+  }
+  .meta{ display:flex; justify-content:space-between; gap:10px; color: var(--muted); font-size: 12px; }
 
-    @media (max-width: 980px){
-      .wrap{ grid-template-columns: 1fr; }
-      .face{ width: 190px; }
-      .sticker{ height: 42px; border-radius: 12px; }
-    }
-  </style>
+  .toggle{ display:flex; align-items:center; gap:10px; color: var(--muted); font-size:12px; }
+  .toggle input{ width: 18px; height: 18px; accent-color: #4ea3ff; }
+
+  @media (max-width: 980px){
+    .wrap{ grid-template-columns: 1fr; }
+    .face{ width: 190px; }
+    .sticker{ height: 42px; border-radius: 12px; }
+    .edge-top,.edge-bottom{ height:42px; }
+    .edge-left,.edge-right{ width:42px; }
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="title">
-        <h1>Rubik Net</h1>
-        <p>画面を回転せずに <b>6面を常に同時表示</b>。操作はルービックキューブルールそのまま。</p>
-      </div>
-      <div class="pillbar">
-        <div class="pill">Moves: R L U D F B / ' / 2</div>
-        <div class="pill">Input: <span class="kbd">R U R' U'</span></div>
-        <div class="pill">Keys: <span class="kbd">R</span> <span class="kbd">U</span> …（Shiftで反転）</div>
-      </div>
-    </header>
-
-    <div class="card">
-      <div class="net" id="net">
-        <div class="face pos-U" data-face="U" id="face-U"></div>
-        <div class="face pos-L" data-face="L" id="face-L"></div>
-        <div class="face pos-F" data-face="F" id="face-F"></div>
-        <div class="face pos-R" data-face="R" id="face-R"></div>
-        <div class="face pos-B" data-face="B" id="face-B"></div>
-        <div class="face pos-D" data-face="D" id="face-D"></div>
-      </div>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Rubik Net+</h1>
+      <p class="sub">6面同時表示のまま、<b>隣接する辺がどことつながるか</b>をホバーで可視化。</p>
     </div>
+    <div class="pillbar">
+      <div class="pill">Hover edges → paired edge glows</div>
+      <div class="pill">Optional: link lines</div>
+    </div>
+  </header>
 
-    <div class="card">
-      <div class="side">
-        <div class="section">
-          <h2>Move Buttons</h2>
-          <div class="controls" id="moveButtons"></div>
-          <div style="height:8px"></div>
-          <div class="btn-row">
-            <button id="btnScramble">Scramble (20)</button>
-            <button id="btnReset">Reset</button>
-            <button id="btnCheck">Solved?</button>
-          </div>
+  <div class="card stage">
+    <svg id="links"></svg>
+    <div class="net">
+      <div class="face pos-U" data-face="U" id="face-U"></div>
+      <div class="face pos-L" data-face="L" id="face-L"></div>
+      <div class="face pos-F" data-face="F" id="face-F"></div>
+      <div class="face pos-R" data-face="R" id="face-R"></div>
+      <div class="face pos-B" data-face="B" id="face-B"></div>
+      <div class="face pos-D" data-face="D" id="face-D"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="side">
+      <div class="section">
+        <h2>Moves</h2>
+        <div class="controls" id="moveButtons"></div>
+        <div style="height:10px"></div>
+        <div class="controls">
+          <button id="btnScramble">Scramble (20)</button>
+          <button id="btnReset">Reset</button>
+          <button id="btnCheck">Solved?</button>
         </div>
+        <div style="height:10px"></div>
+        <label class="toggle">
+          <input type="checkbox" id="toggleLinks" checked />
+          Show link lines (SVG)
+        </label>
+      </div>
 
-        <div class="section">
-          <h2>Sequence</h2>
-          <textarea class="textarea" id="seq" spellcheck="false">R U R' U'</textarea>
-          <div style="height:8px"></div>
-          <div class="btn-row">
-            <button id="btnRun">Run</button>
-            <button id="btnRunSlow">Run Slow</button>
-            <button id="btnClear">Clear</button>
-          </div>
-          <div style="height:10px"></div>
-          <div class="meta">
-            <div>Tip: <span class="kbd">Shift</span> + key で反時計</div>
-            <div id="moveCount">Moves: 0</div>
-          </div>
+      <div class="section">
+        <h2>Sequence</h2>
+        <textarea class="textarea" id="seq" spellcheck="false">R U R' U'</textarea>
+        <div style="height:8px"></div>
+        <div class="controls">
+          <button id="btnRun">Run</button>
+          <button id="btnRunSlow">Run Slow</button>
+          <button id="btnClear">Clear</button>
         </div>
+        <div style="height:10px"></div>
+        <div class="meta">
+          <div>Hover: edge highlight</div>
+          <div id="moveCount">Moves: 0</div>
+        </div>
+      </div>
 
-        <div class="section">
-          <h2>Design Note</h2>
-          <div style="color:var(--muted); font-size:12px; line-height:1.65">
-            展開図UIは「常に全体把握できる」ことが強み。<br/>
-            次の拡張で、手のアニメ（スライド）・手戻り履歴・タイムアタックも追加できます。
-          </div>
+      <div class="section">
+        <h2>Why it’s clearer</h2>
+        <div style="color:var(--muted); font-size:12px; line-height:1.65">
+          辺の対応関係を「同時ハイライト + 線」で表示すると、展開図でも立体の折れ目を追いやすいです。<br/>
+          次は、回転対象レイヤーのプレビュー（回る行/列を光らせる）を足すとさらに直感的になります。
         </div>
       </div>
     </div>
   </div>
-
-  <div class="toast" id="toast"></div>
+</div>
 
 <script>
-/** -----------------------------
- * Cube model (3x3) — 6 faces
- * faces: U D F B L R
- * Each face is 9 stickers indexed:
- * 0 1 2
- * 3 4 5
- * 6 7 8
- * ----------------------------- */
-
-const FACE_ORDER = ["U","L","F","R","B","D"]; // for net placement
 const COLOR = {
   U: getComputedStyle(document.documentElement).getPropertyValue('--U').trim(),
   D: getComputedStyle(document.documentElement).getPropertyValue('--D').trim(),
@@ -331,203 +259,281 @@ const COLOR = {
 
 function solvedCube(){
   const c = {};
-  for (const f of ["U","D","F","B","L","R"]){
-    c[f] = Array(9).fill(f);
-  }
+  for (const f of ["U","D","F","B","L","R"]) c[f] = Array(9).fill(f);
   return c;
 }
-
 let cube = solvedCube();
 let moveCounter = 0;
 
-/** rotate face 90° cw (in place copy) */
-function rotFaceCW(a){
-  // mapping indices for cw
-  return [a[6],a[3],a[0], a[7],a[4],a[1], a[8],a[5],a[2]];
-}
-function rotFaceCCW(a){
-  return [a[2],a[5],a[8], a[1],a[4],a[7], a[0],a[3],a[6]];
-}
+function rotFaceCW(a){ return [a[6],a[3],a[0], a[7],a[4],a[1], a[8],a[5],a[2]]; }
 
-/**
- * Moves definition:
- * We'll implement basic face turns (cw) with correct edge cycles.
- * Indices of edge rows/cols on each face are carefully mapped.
- *
- * Convention:
- * - F face is "front", U top, R right, L left, D bottom, B back.
- * - We treat sticker orientation standard for net display.
- */
 function moveCW(face){
   const c = cube;
-
-  // helper to get/set a list of stickers by indices
   const get = (f, idxs) => idxs.map(i => c[f][i]);
   const set = (f, idxs, vals) => idxs.forEach((i,k)=> c[f][i]=vals[k]);
 
-  // Rotate the face itself
   c[face] = rotFaceCW(c[face]);
 
-  // Adjacent cycles per face (cw)
-  // Each entry: [faceName, indices[]]
-  // Order of cycle matters: take from prev -> next
   const cycles = {
-    U: [
-      ["B",[0,1,2]],
-      ["R",[0,1,2]],
-      ["F",[0,1,2]],
-      ["L",[0,1,2]],
-    ],
-    D: [
-      ["F",[6,7,8]],
-      ["R",[6,7,8]],
-      ["B",[6,7,8]],
-      ["L",[6,7,8]],
-    ],
-    F: [
-      ["U",[6,7,8]],
-      ["R",[0,3,6]],
-      ["D",[2,1,0]],
-      ["L",[8,5,2]],
-    ],
-    B: [
-      ["U",[2,1,0]],
-      ["L",[0,3,6]],
-      ["D",[6,7,8]],
-      ["R",[8,5,2]],
-    ],
-    R: [
-      ["U",[2,5,8]],
-      ["B",[6,3,0]],
-      ["D",[2,5,8]],
-      ["F",[2,5,8]],
-    ],
-    L: [
-      ["U",[0,3,6]],
-      ["F",[0,3,6]],
-      ["D",[0,3,6]],
-      ["B",[8,5,2]],
-    ],
+    U: [["B",[0,1,2]],["R",[0,1,2]],["F",[0,1,2]],["L",[0,1,2]]],
+    D: [["F",[6,7,8]],["R",[6,7,8]],["B",[6,7,8]],["L",[6,7,8]]],
+    F: [["U",[6,7,8]],["R",[0,3,6]],["D",[2,1,0]],["L",[8,5,2]]],
+    B: [["U",[2,1,0]],["L",[0,3,6]],["D",[6,7,8]],["R",[8,5,2]]],
+    R: [["U",[2,5,8]],["B",[6,3,0]],["D",[2,5,8]],["F",[2,5,8]]],
+    L: [["U",[0,3,6]],["F",[0,3,6]],["D",[0,3,6]],["B",[8,5,2]]],
   };
-
   const cyc = cycles[face];
   const temp = get(cyc[0][0], cyc[0][1]);
-  for(let i=0;i<3;i++){
-    set(cyc[i][0], cyc[i][1], get(cyc[i+1][0], cyc[i+1][1]));
-  }
+  for(let i=0;i<3;i++) set(cyc[i][0], cyc[i][1], get(cyc[i+1][0], cyc[i+1][1]));
   set(cyc[3][0], cyc[3][1], temp);
 }
 
 function applyMove(token){
-  // token: "R" "R'" "R2"
   const m = token.trim();
   if(!m) return;
-
   const face = m[0];
   if(!"UDLRFB".includes(face)) return;
 
-  let times = 1;
-  let prime = false;
+  let times = 1, prime = false;
   if(m.endsWith("2")) times = 2;
   if(m.endsWith("'")) prime = true;
+  if(prime) times = (times === 2) ? 2 : 3;
 
-  if(prime){
-    // ccw = cw 3 times
-    times = (times === 2) ? 2 : 3;
-  }
-  for(let i=0;i<times;i++){
-    moveCW(face);
-  }
+  for(let i=0;i<times;i++) moveCW(face);
   moveCounter++;
-  updateMoveCounter();
+  document.getElementById("moveCount").textContent = `Moves: ${moveCounter}`;
   render();
 }
 
 function parseSequence(seq){
-  // Accept: R U R' U'  (spaces)
-  // Also accept: RU R'U' style with spaces (basic)
   const cleaned = seq.replace(/\n/g," ").trim();
   if(!cleaned) return [];
-  // Tokenize by spaces first; if none, fall back to regex
   let parts = cleaned.split(/\s+/).filter(Boolean);
-  if(parts.length === 1){
-    // regex tokenization: face + optional (' or 2)
-    parts = cleaned.match(/[UDLRFB](?:'|2)?/g) ?? [];
-  }
+  if(parts.length === 1) parts = cleaned.match(/[UDLRFB](?:'|2)?/g) ?? [];
   return parts;
 }
 
-/** -----------------------------
- * UI render
- * ----------------------------- */
 function render(){
   for(const f of ["U","D","F","B","L","R"]){
     const faceEl = document.getElementById(`face-${f}`);
     faceEl.innerHTML = "";
+
+    // 9 stickers
     for(let i=0;i<9;i++){
       const s = document.createElement("div");
       s.className = "sticker";
-      const code = cube[f][i]; // 'U' etc
+      const code = cube[f][i];
       s.style.background = `linear-gradient(180deg, ${COLOR[code]}, rgba(0,0,0,0.18))`;
+      s.dataset.face = f;
+      s.dataset.idx = String(i);
       faceEl.appendChild(s);
     }
+
+    // 4 edge hit-areas
+    const edges = [
+      ["top","edge-top"],
+      ["right","edge-right"],
+      ["bottom","edge-bottom"],
+      ["left","edge-left"],
+    ];
+    for(const [edge, cls] of edges){
+      const hit = document.createElement("div");
+      hit.className = `edgeHit ${cls}`;
+      hit.dataset.face = f;
+      hit.dataset.edge = edge;
+      hit.addEventListener("mouseenter", onEdgeEnter);
+      hit.addEventListener("mouseleave", clearEdgeHighlight);
+      faceEl.appendChild(hit);
+    }
   }
-}
-
-function toast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  clearTimeout(toast._tm);
-  toast._tm = setTimeout(()=> t.classList.remove("show"), 1200);
-}
-
-function updateMoveCounter(){
-  document.getElementById("moveCount").textContent = `Moves: ${moveCounter}`;
+  rebuildLinkSVG(); // update link line positions
 }
 
 function isSolved(){
   for(const f of ["U","D","F","B","L","R"]){
-    const all = cube[f].every(x => x === cube[f][4]);
-    if(!all) return false;
+    if(!cube[f].every(x => x === cube[f][4])) return false;
   }
   return true;
 }
 
 /** -----------------------------
- * Controls
+ * Edge adjacency (visual aid)
+ * We define which edge corresponds to which other face edge in the net.
+ * This is UI adjacency (physical cube adjacency):
+ *
+ * F top <-> U bottom
+ * F right <-> R left
+ * F bottom <-> D top
+ * F left <-> L right
+ *
+ * U top <-> B top  (depending on convention; for clarity we link U top to B top)
+ * D bottom <-> B bottom
+ * L left <-> B right
+ * R right <-> B left
+ *
+ * (This mapping is for "where you'd fold" and is consistent for highlighting.)
  * ----------------------------- */
+const EDGE_MAP = {
+  "F:top":    { f:"U", e:"bottom" },
+  "F:right":  { f:"R", e:"left" },
+  "F:bottom": { f:"D", e:"top" },
+  "F:left":   { f:"L", e:"right" },
+
+  "U:bottom": { f:"F", e:"top" },
+  "R:left":   { f:"F", e:"right" },
+  "D:top":    { f:"F", e:"bottom" },
+  "L:right":  { f:"F", e:"left" },
+
+  "U:top":    { f:"B", e:"top" },
+  "B:top":    { f:"U", e:"top" },
+
+  "D:bottom": { f:"B", e:"bottom" },
+  "B:bottom": { f:"D", e:"bottom" },
+
+  "L:left":   { f:"B", e:"right" },
+  "B:right":  { f:"L", e:"left" },
+
+  "R:right":  { f:"B", e:"left" },
+  "B:left":   { f:"R", e:"right" },
+};
+
+// edge -> sticker indices (three stickers on that edge)
+const EDGE_IDXS = {
+  top:    [0,1,2],
+  right:  [2,5,8],
+  bottom: [6,7,8],
+  left:   [0,3,6],
+};
+
+function faceEl(f){ return document.getElementById(`face-${f}`); }
+
+function highlightEdge(face, edge){
+  // face glow
+  faceEl(face).classList.add("focus");
+
+  // sticker glow on that edge
+  const idxs = EDGE_IDXS[edge];
+  const stickers = faceEl(face).querySelectorAll(".sticker");
+  idxs.forEach(i => stickers[i].classList.add("edgeOn"));
+}
+
+function clearEdgeHighlight(){
+  for(const f of ["U","D","F","B","L","R"]){
+    faceEl(f).classList.remove("focus");
+    faceEl(f).querySelectorAll(".sticker.edgeOn").forEach(s=>s.classList.remove("edgeOn"));
+  }
+  // hide lines
+  document.querySelectorAll(".link").forEach(p=>p.classList.remove("on"));
+}
+
+function onEdgeEnter(e){
+  const face = e.currentTarget.dataset.face;
+  const edge = e.currentTarget.dataset.edge;
+  clearEdgeHighlight();
+
+  const key = `${face}:${edge}`;
+  const pair = EDGE_MAP[key];
+
+  highlightEdge(face, edge);
+  if(pair) highlightEdge(pair.f, pair.e);
+
+  // show link line
+  const id = linkId(face, edge, pair?.f, pair?.e);
+  if(id){
+    const path = document.getElementById(id);
+    if(path) path.classList.add("on");
+  }
+}
+
+function linkId(f1,e1,f2,e2){
+  if(!f2) return null;
+  const a = `${f1}:${e1}`;
+  const b = `${f2}:${e2}`;
+  // stable order
+  return "link-" + [a,b].sort().join("__").replaceAll(":","-");
+}
+
+/** SVG link lines (optional) */
+function rebuildLinkSVG(){
+  const svg = document.getElementById("links");
+  svg.innerHTML = "";
+  const show = document.getElementById("toggleLinks")?.checked ?? true;
+  svg.style.display = show ? "block" : "none";
+  if(!show) return;
+
+  const stage = document.querySelector(".stage");
+  const srect = stage.getBoundingClientRect();
+
+  // Build unique links from EDGE_MAP (paired)
+  const seen = new Set();
+  for(const k in EDGE_MAP){
+    const a = k;
+    const b = `${EDGE_MAP[k].f}:${EDGE_MAP[k].e}`;
+    const key = [a,b].sort().join("|");
+    if(seen.has(key)) continue;
+    seen.add(key);
+
+    const [f1,e1] = a.split(":");
+    const [f2,e2] = b.split(":");
+
+    const p1 = edgeCenterPoint(f1,e1,srect);
+    const p2 = edgeCenterPoint(f2,e2,srect);
+    if(!p1 || !p2) continue;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("class","link");
+    path.setAttribute("id", linkId(f1,e1,f2,e2));
+
+    // nice curve
+    const dx = (p2.x - p1.x);
+    const dy = (p2.y - p1.y);
+    const c1 = { x: p1.x + dx*0.35, y: p1.y + dy*0.05 };
+    const c2 = { x: p1.x + dx*0.65, y: p1.y + dy*0.95 };
+    const d = `M ${p1.x} ${p1.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p2.x} ${p2.y}`;
+    path.setAttribute("d", d);
+
+    svg.appendChild(path);
+  }
+
+  svg.setAttribute("viewBox", `0 0 ${srect.width} ${srect.height}`);
+  svg.setAttribute("preserveAspectRatio","none");
+}
+
+function edgeCenterPoint(face, edge, stageRect){
+  const el = faceEl(face);
+  if(!el) return null;
+  const rect = el.getBoundingClientRect();
+  // face inner content area is basically the padding box; we approximate using rect.
+  let x = rect.left + rect.width/2;
+  let y = rect.top + rect.height/2;
+  const inset = 18; // roughly padding area
+  if(edge === "top")    y = rect.top + inset;
+  if(edge === "bottom") y = rect.bottom - inset;
+  if(edge === "left")   x = rect.left + inset;
+  if(edge === "right")  x = rect.right - inset;
+
+  return { x: x - stageRect.left, y: y - stageRect.top };
+}
+
+/** controls */
 const MOVE_KEYS = ["R","L","U","D","F","B"];
 const moveButtons = document.getElementById("moveButtons");
-
 for(const m of MOVE_KEYS){
-  const b1 = document.createElement("button"); b1.textContent = m;
-  b1.onclick = ()=> applyMove(m);
-  const b2 = document.createElement("button"); b2.textContent = `${m}'`;
-  b2.onclick = ()=> applyMove(`${m}'`);
-  const b3 = document.createElement("button"); b3.textContent = `${m}2`;
-  b3.onclick = ()=> applyMove(`${m}2`);
-  moveButtons.appendChild(b1);
-  moveButtons.appendChild(b2);
-  moveButtons.appendChild(b3);
+  const b1 = document.createElement("button"); b1.textContent = m; b1.onclick = ()=> applyMove(m);
+  const b2 = document.createElement("button"); b2.textContent = `${m}'`; b2.onclick = ()=> applyMove(`${m}'`);
+  const b3 = document.createElement("button"); b3.textContent = `${m}2`; b3.onclick = ()=> applyMove(`${m}2`);
+  moveButtons.appendChild(b1); moveButtons.appendChild(b2); moveButtons.appendChild(b3);
 }
 
 document.getElementById("btnReset").onclick = ()=>{
-  cube = solvedCube();
-  moveCounter = 0;
-  updateMoveCounter();
+  cube = solvedCube(); moveCounter = 0;
+  document.getElementById("moveCount").textContent = `Moves: ${moveCounter}`;
   render();
-  toast("Reset");
 };
 
-document.getElementById("btnCheck").onclick = ()=>{
-  toast(isSolved() ? "Solved ✅" : "Not yet ❖");
-};
+document.getElementById("btnCheck").onclick = ()=> alert(isSolved() ? "Solved ✅" : "Not yet");
 
-document.getElementById("btnClear").onclick = ()=>{
-  document.getElementById("seq").value = "";
-  toast("Cleared");
-};
+document.getElementById("btnClear").onclick = ()=> document.getElementById("seq").value = "";
 
 document.getElementById("btnScramble").onclick = ()=>{
   const faces = ["R","L","U","D","F","B"];
@@ -540,49 +546,23 @@ document.getElementById("btnScramble").onclick = ()=>{
     prev = f;
     seq.push(f + suffix[(Math.random()*suffix.length)|0]);
   }
-  const s = seq.join(" ");
-  document.getElementById("seq").value = s;
-  toast("Scramble generated");
+  document.getElementById("seq").value = seq.join(" ");
 };
 
 async function runSequence(seq, delayMs=0){
   const tokens = parseSequence(seq);
-  if(tokens.length === 0){
-    toast("No moves");
-    return;
-  }
   for(const t of tokens){
     applyMove(t);
     if(delayMs) await new Promise(r=>setTimeout(r,delayMs));
   }
-  toast("Done");
 }
+document.getElementById("btnRun").onclick = ()=> runSequence(document.getElementById("seq").value, 0);
+document.getElementById("btnRunSlow").onclick = ()=> runSequence(document.getElementById("seq").value, 160);
 
-document.getElementById("btnRun").onclick = ()=>{
-  runSequence(document.getElementById("seq").value, 0);
-};
-document.getElementById("btnRunSlow").onclick = ()=>{
-  runSequence(document.getElementById("seq").value, 160);
-};
+document.getElementById("toggleLinks").addEventListener("change", rebuildLinkSVG);
+window.addEventListener("resize", ()=> setTimeout(rebuildLinkSVG, 0));
 
-// Keyboard: R L U D F B (Shift => prime)
-window.addEventListener("keydown", (e)=>{
-  const k = e.key.toUpperCase();
-  if(!MOVE_KEYS.includes(k)) return;
-
-  // avoid typing into textarea
-  const active = document.activeElement;
-  if(active && (active.tagName === "TEXTAREA" || active.tagName === "INPUT")) return;
-
-  const token = e.shiftKey ? `${k}'` : k;
-  applyMove(token);
-  toast(token);
-});
-
-/** init */
 render();
-updateMoveCounter();
-toast("Ready");
 </script>
 </body>
 </html>
