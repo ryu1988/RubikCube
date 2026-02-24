@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Rubik Net+ — linked edges</title>
+<title>Rubik Cross — always visible</title>
 <style>
   :root{
     --bg0:#0b1020; --bg1:#0a1633;
@@ -15,14 +15,12 @@
     --U:#f4f6fb; --D:#ffd44d; --F:#36d28a;
     --B:#4ea3ff; --L:#ff8a3d; --R:#ff4d5e;
 
-    --sticker-gap: 10px;
-    --face-gap: 18px;
     --radius: 18px;
-
-    --glow: 0 0 0 3px rgba(255,255,255,0.18), 0 0 24px rgba(78,163,255,0.22);
-    --edgeGlow: 0 0 0 3px rgba(78,163,255,0.30), 0 0 26px rgba(78,163,255,0.35);
+    --sticker-gap: 10px;
   }
-  *{box-sizing:border-box}
+
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
   body{
     margin:0;
     font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans JP", sans-serif;
@@ -32,71 +30,82 @@
       radial-gradient(900px 700px at 90% 20%, #ff4d5e22, transparent 55%),
       radial-gradient(800px 800px at 60% 90%, #36d28a22, transparent 60%),
       linear-gradient(160deg, var(--bg0), var(--bg1));
+    overflow-x:hidden;
   }
+
   .wrap{
-    max-width: 1220px;
-    margin:0 auto;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 26px 18px 40px;
     display:grid;
-    grid-template-columns: 1.25fr 0.75fr;
+    grid-template-columns: 1.15fr 0.85fr;
     gap: 18px;
     align-items:start;
   }
-  header{grid-column:1/-1; display:flex; justify-content:space-between; gap:14px; align-items:flex-end}
-  h1{margin:0; font-size:22px; font-weight:720}
-  .sub{margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.55}
-  .pill{padding:8px 10px; border:1px solid var(--line); background:var(--panel); border-radius:999px; font-size:12px; color:var(--muted); backdrop-filter: blur(10px)}
-  .pillbar{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end}
+  header{
+    grid-column:1/-1;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap: 14px;
+    padding: 8px 4px 0;
+  }
+  h1{ margin:0; font-size: 22px; font-weight: 760; letter-spacing: .2px; }
+  .sub{ margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.6; }
+  .pillbar{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+  .pill{
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--muted);
+    backdrop-filter: blur(10px);
+  }
 
   .card{
     border: 1px solid var(--line);
     background: linear-gradient(180deg, var(--panel), rgba(255,255,255,0.03));
     border-radius: var(--radius);
-    box-shadow: 0 20px 80px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.05) inset;
+    box-shadow:
+      0 20px 80px rgba(0,0,0,0.35),
+      0 1px 0 rgba(255,255,255,0.05) inset;
     backdrop-filter: blur(12px);
   }
 
-  .stage{ position:relative; padding: 14px; }
-  /* SVG overlay for edge links */
-  #links{
-    position:absolute; inset: 0;
-    width:100%; height:100%;
-    pointer-events:none;
-    opacity:0.9;
-  }
-  .link{
-    stroke: rgba(78,163,255,0.30);
-    stroke-width: 2;
-    fill: none;
-    filter: drop-shadow(0 0 10px rgba(78,163,255,0.20));
-    opacity: 0;
-    transition: opacity .12s ease;
-  }
-  .link.on{ opacity: 1; }
-
-  .net{
-    display:grid;
-    grid-template-columns: repeat(4, auto);
-    grid-template-rows: repeat(3, auto);
-    gap: var(--face-gap);
-    justify-content:center;
-    padding: 18px 10px 22px;
+  /* ====== Cross layout stage ====== */
+  .stage{
     position:relative;
-    z-index:1;
+    padding: 18px;
+    min-height: 620px;
   }
 
+  /* Cross metrics */
+  .cross{
+    position:relative;
+    width: 100%;
+    height: 100%;
+    display:block;
+  }
+  /* responsive face size */
+  .cross{
+    --faceSize: clamp(190px, 22vw, 240px);
+    --gap: clamp(16px, 2.2vw, 26px);
+  }
+
+  /* Face component */
   .face{
+    position:absolute;
+    width: var(--faceSize);
+    height: var(--faceSize);
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: rgba(0,0,0,0.18);
     display:grid;
     grid-template-columns: repeat(3, 1fr);
     gap: var(--sticker-gap);
-    padding: 14px;
-    border-radius: 16px;
-    border: 1px solid var(--line);
-    background: rgba(0,0,0,0.18);
-    position:relative;
-    width: 210px;
-    box-shadow: 0 0 0 0 rgba(78,163,255,0);
-    transition: box-shadow .12s ease, transform .12s ease;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.28);
   }
   .face::before{
     content: attr(data-face);
@@ -106,42 +115,105 @@
     letter-spacing: 0.9px;
     color: rgba(255,255,255,0.62);
     text-transform: uppercase;
+    pointer-events:none;
   }
-  .face.focus{ box-shadow: var(--glow); transform: translateY(-1px); }
 
   .sticker{
     border-radius: 14px;
-    height: 46px;
     border: 1px solid rgba(255,255,255,0.10);
-    box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.12) inset;
-    transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+    box-shadow:
+      0 10px 24px rgba(0,0,0,0.32),
+      0 1px 0 rgba(255,255,255,0.12) inset;
+    transition: transform .12s ease, filter .12s ease;
+    transform: translateZ(0);
   }
-  .sticker.edgeOn{ box-shadow: var(--edgeGlow); }
-  .sticker:hover{ transform: translateY(-2px); }
+  .sticker:hover{ transform: translateY(-2px); filter:saturate(1.06) contrast(1.02); }
 
-  /* face positions */
-  .pos-U{ grid-column: 2; grid-row: 1; }
-  .pos-L{ grid-column: 1; grid-row: 2; }
-  .pos-F{ grid-column: 2; grid-row: 2; }
-  .pos-R{ grid-column: 3; grid-row: 2; }
-  .pos-B{ grid-column: 4; grid-row: 2; }
-  .pos-D{ grid-column: 2; grid-row: 3; }
+  /* Cross positions: center = F */
+  #face-F{
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    z-index: 3;
+  }
+  #face-U{
+    left: 50%;
+    top: calc(50% - var(--faceSize) - var(--gap));
+    transform: translateX(-50%);
+    z-index: 3;
+  }
+  #face-D{
+    left: 50%;
+    top: calc(50% + var(--faceSize) + var(--gap));
+    transform: translateX(-50%);
+    z-index: 3;
+  }
+  #face-L{
+    left: calc(50% - var(--faceSize) - var(--gap));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+  }
+  #face-R{
+    left: calc(50% + var(--faceSize) + var(--gap));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+  }
 
-  /* edge hit areas */
-  .edgeHit{
+  /* Back face as a "halo" behind the cross (always visible) */
+  #face-B{
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%) scale(1.12);
+    z-index: 1;
+    opacity: 0.62;
+    background: rgba(0,0,0,0.10);
+    border-color: rgba(255,255,255,0.08);
+    box-shadow:
+      0 26px 90px rgba(0,0,0,0.40),
+      0 0 0 10px rgba(78,163,255,0.06);
+    filter: blur(0.0px);
+    pointer-events: none; /* 背面はクリック不要（見せる専用） */
+  }
+  #face-B::before{
+    content:"B (BACK)";
+    letter-spacing: 1.2px;
+    opacity: 0.85;
+  }
+
+  /* Subtle connectors (design hint) */
+  .connector{
     position:absolute;
-    border-radius: 14px;
-    /* debug: background: rgba(255,255,255,0.04); */
+    left:50%; top:50%;
+    width: 2px; height: 2px;
+    z-index: 2;
+    pointer-events:none;
   }
-  .edgeHit:hover{ outline: 2px solid rgba(78,163,255,0.35); outline-offset: 2px; }
-  /* top/right/bottom/left strips around sticker grid */
-  .edge-top{ left:14px; right:14px; top:14px; height: 46px; }
-  .edge-bottom{ left:14px; right:14px; bottom:14px; height: 46px; }
-  .edge-left{ left:14px; top:14px; bottom:14px; width: 46px; }
-  .edge-right{ right:14px; top:14px; bottom:14px; width: 46px; }
+  .beam{
+    position:absolute;
+    background: linear-gradient(180deg, rgba(78,163,255,0.00), rgba(78,163,255,0.22), rgba(78,163,255,0.00));
+    filter: drop-shadow(0 0 10px rgba(78,163,255,0.22));
+    opacity: 0.75;
+    border-radius: 999px;
+  }
+  .beam.h{ height: 6px; }
+  .beam.v{ width: 6px; }
 
-  .side{ padding: 18px; display:flex; flex-direction:column; gap: 14px; }
-  h2{ margin:0 0 8px; font-size:13px; letter-spacing:.6px; color: rgba(255,255,255,0.80); font-weight: 700; }
+  /* Right panel */
+  .side{
+    padding: 18px;
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+  }
+  .section h2{
+    margin:0 0 8px;
+    font-size: 13px;
+    letter-spacing: 0.6px;
+    color: rgba(255,255,255,0.80);
+    font-weight: 750;
+  }
   .controls{ display:flex; flex-wrap:wrap; gap: 8px; }
   button{
     cursor:pointer;
@@ -155,50 +227,82 @@
     user-select:none;
     backdrop-filter: blur(10px);
   }
-  button:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.18); }
-  button:active{ transform: translateY(0px) scale(0.99); }
-  .textarea{
-    width: 100%; min-height: 84px; resize: vertical;
-    border-radius: 14px; border: 1px solid var(--line);
-    background: rgba(0,0,0,0.22); color: var(--txt);
-    padding: 10px 12px; font-size: 13px; outline: none;
+  button:hover{
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.10);
+    border-color: rgba(255,255,255,0.18);
   }
-  .meta{ display:flex; justify-content:space-between; gap:10px; color: var(--muted); font-size: 12px; }
+  button:active{ transform: translateY(0px) scale(0.99); }
 
-  .toggle{ display:flex; align-items:center; gap:10px; color: var(--muted); font-size:12px; }
-  .toggle input{ width: 18px; height: 18px; accent-color: #4ea3ff; }
+  .textarea{
+    width: 100%;
+    min-height: 84px;
+    resize: vertical;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: rgba(0,0,0,0.22);
+    color: var(--txt);
+    padding: 10px 12px;
+    font-size: 13px;
+    outline: none;
+  }
+  .textarea:focus{
+    border-color: rgba(255,255,255,0.22);
+    box-shadow: 0 0 0 4px rgba(78,163,255,0.12);
+  }
+
+  .meta{
+    display:flex; justify-content:space-between; gap:10px;
+    color: var(--muted); font-size: 12px;
+  }
+
+  .toggle{
+    display:flex; align-items:center; gap:10px;
+    color: var(--muted); font-size:12px;
+  }
+  .toggle input{ width:18px; height:18px; accent-color:#4ea3ff; }
 
   @media (max-width: 980px){
     .wrap{ grid-template-columns: 1fr; }
-    .face{ width: 190px; }
-    .sticker{ height: 42px; border-radius: 12px; }
-    .edge-top,.edge-bottom{ height:42px; }
-    .edge-left,.edge-right{ width:42px; }
+    .stage{ min-height: 640px; }
+    #face-R{ top: calc(50% + var(--faceSize) + var(--gap)); left: 50%; transform: translateX(-50%); }
+    #face-L{ top: calc(50% - var(--faceSize) - var(--gap)); left: 50%; transform: translateX(-50%); }
+    /* 小画面は縦に寄せる（見切れ回避） */
   }
 </style>
 </head>
+
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>Rubik Net+</h1>
-      <p class="sub">6面同時表示のまま、<b>隣接する辺がどことつながるか</b>をホバーで可視化。</p>
+      <h1>Rubik Cross</h1>
+      <p class="sub">回転なしで6面同時表示。<b>Fを中心</b>に U/L/R/D を配置し、Bは<b>背後のゴースト面</b>として常時可視化。</p>
     </div>
     <div class="pillbar">
-      <div class="pill">Hover edges → paired edge glows</div>
-      <div class="pill">Optional: link lines</div>
+      <div class="pill">UI: Cross + Back Halo</div>
+      <div class="pill">Moves: R L U D F B / ' / 2</div>
+      <div class="pill">Input: R U R' U'</div>
     </div>
   </header>
 
   <div class="card stage">
-    <svg id="links"></svg>
-    <div class="net">
-      <div class="face pos-U" data-face="U" id="face-U"></div>
-      <div class="face pos-L" data-face="L" id="face-L"></div>
-      <div class="face pos-F" data-face="F" id="face-F"></div>
-      <div class="face pos-R" data-face="R" id="face-R"></div>
-      <div class="face pos-B" data-face="B" id="face-B"></div>
-      <div class="face pos-D" data-face="D" id="face-D"></div>
+    <div class="cross" id="cross">
+      <!-- subtle beams to suggest adjacency -->
+      <div class="connector" aria-hidden="true">
+        <div class="beam v" style="left:-3px; top: calc(-1*(var(--faceSize) + var(--gap)) + 18px); height: calc(var(--faceSize) + var(--gap) - 20px);"></div>
+        <div class="beam v" style="left:-3px; top: 18px; height: calc(var(--faceSize) + var(--gap) - 20px);"></div>
+        <div class="beam h" style="top:-3px; left: calc(-1*(var(--faceSize) + var(--gap)) + 18px); width: calc(var(--faceSize) + var(--gap) - 20px);"></div>
+        <div class="beam h" style="top:-3px; left: 18px; width: calc(var(--faceSize) + var(--gap) - 20px);"></div>
+      </div>
+
+      <!-- Faces (B behind) -->
+      <div class="face" data-face="B" id="face-B"></div>
+      <div class="face" data-face="U" id="face-U"></div>
+      <div class="face" data-face="L" id="face-L"></div>
+      <div class="face" data-face="F" id="face-F"></div>
+      <div class="face" data-face="R" id="face-R"></div>
+      <div class="face" data-face="D" id="face-D"></div>
     </div>
   </div>
 
@@ -215,8 +319,8 @@
         </div>
         <div style="height:10px"></div>
         <label class="toggle">
-          <input type="checkbox" id="toggleLinks" checked />
-          Show link lines (SVG)
+          <input type="checkbox" id="toggleBack" checked />
+          Show B as “Back Halo”
         </label>
       </div>
 
@@ -231,16 +335,16 @@
         </div>
         <div style="height:10px"></div>
         <div class="meta">
-          <div>Hover: edge highlight</div>
+          <div>Always visible: U L F R D + back B</div>
           <div id="moveCount">Moves: 0</div>
         </div>
       </div>
 
       <div class="section">
-        <h2>Why it’s clearer</h2>
+        <h2>Next (recommended)</h2>
         <div style="color:var(--muted); font-size:12px; line-height:1.65">
-          辺の対応関係を「同時ハイライト + 線」で表示すると、展開図でも立体の折れ目を追いやすいです。<br/>
-          次は、回転対象レイヤーのプレビュー（回る行/列を光らせる）を足すとさらに直感的になります。
+          この配置は「隣接が直感的」なので、次は<br/>
+          <b>回転前プレビュー（影響する辺/列を発光）</b>を足すとさらに分かりやすくなります。
         </div>
       </div>
     </div>
@@ -248,6 +352,7 @@
 </div>
 
 <script>
+/* ===== Cube model (same as before) ===== */
 const COLOR = {
   U: getComputedStyle(document.documentElement).getPropertyValue('--U').trim(),
   D: getComputedStyle(document.documentElement).getPropertyValue('--D').trim(),
@@ -259,9 +364,10 @@ const COLOR = {
 
 function solvedCube(){
   const c = {};
-  for (const f of ["U","D","F","B","L","R"]) c[f] = Array(9).fill(f);
+  for(const f of ["U","D","F","B","L","R"]) c[f] = Array(9).fill(f);
   return c;
 }
+
 let cube = solvedCube();
 let moveCounter = 0;
 
@@ -282,6 +388,7 @@ function moveCW(face){
     R: [["U",[2,5,8]],["B",[6,3,0]],["D",[2,5,8]],["F",[2,5,8]]],
     L: [["U",[0,3,6]],["F",[0,3,6]],["D",[0,3,6]],["B",[8,5,2]]],
   };
+
   const cyc = cycles[face];
   const temp = get(cyc[0][0], cyc[0][1]);
   for(let i=0;i<3;i++) set(cyc[i][0], cyc[i][1], get(cyc[i+1][0], cyc[i+1][1]));
@@ -294,12 +401,14 @@ function applyMove(token){
   const face = m[0];
   if(!"UDLRFB".includes(face)) return;
 
-  let times = 1, prime = false;
+  let times = 1;
+  let prime = false;
   if(m.endsWith("2")) times = 2;
   if(m.endsWith("'")) prime = true;
   if(prime) times = (times === 2) ? 2 : 3;
 
   for(let i=0;i<times;i++) moveCW(face);
+
   moveCounter++;
   document.getElementById("moveCount").textContent = `Moves: ${moveCounter}`;
   render();
@@ -313,42 +422,6 @@ function parseSequence(seq){
   return parts;
 }
 
-function render(){
-  for(const f of ["U","D","F","B","L","R"]){
-    const faceEl = document.getElementById(`face-${f}`);
-    faceEl.innerHTML = "";
-
-    // 9 stickers
-    for(let i=0;i<9;i++){
-      const s = document.createElement("div");
-      s.className = "sticker";
-      const code = cube[f][i];
-      s.style.background = `linear-gradient(180deg, ${COLOR[code]}, rgba(0,0,0,0.18))`;
-      s.dataset.face = f;
-      s.dataset.idx = String(i);
-      faceEl.appendChild(s);
-    }
-
-    // 4 edge hit-areas
-    const edges = [
-      ["top","edge-top"],
-      ["right","edge-right"],
-      ["bottom","edge-bottom"],
-      ["left","edge-left"],
-    ];
-    for(const [edge, cls] of edges){
-      const hit = document.createElement("div");
-      hit.className = `edgeHit ${cls}`;
-      hit.dataset.face = f;
-      hit.dataset.edge = edge;
-      hit.addEventListener("mouseenter", onEdgeEnter);
-      hit.addEventListener("mouseleave", clearEdgeHighlight);
-      faceEl.appendChild(hit);
-    }
-  }
-  rebuildLinkSVG(); // update link line positions
-}
-
 function isSolved(){
   for(const f of ["U","D","F","B","L","R"]){
     if(!cube[f].every(x => x === cube[f][4])) return false;
@@ -356,166 +429,23 @@ function isSolved(){
   return true;
 }
 
-/** -----------------------------
- * Edge adjacency (visual aid)
- * We define which edge corresponds to which other face edge in the net.
- * This is UI adjacency (physical cube adjacency):
- *
- * F top <-> U bottom
- * F right <-> R left
- * F bottom <-> D top
- * F left <-> L right
- *
- * U top <-> B top  (depending on convention; for clarity we link U top to B top)
- * D bottom <-> B bottom
- * L left <-> B right
- * R right <-> B left
- *
- * (This mapping is for "where you'd fold" and is consistent for highlighting.)
- * ----------------------------- */
-const EDGE_MAP = {
-  "F:top":    { f:"U", e:"bottom" },
-  "F:right":  { f:"R", e:"left" },
-  "F:bottom": { f:"D", e:"top" },
-  "F:left":   { f:"L", e:"right" },
-
-  "U:bottom": { f:"F", e:"top" },
-  "R:left":   { f:"F", e:"right" },
-  "D:top":    { f:"F", e:"bottom" },
-  "L:right":  { f:"F", e:"left" },
-
-  "U:top":    { f:"B", e:"top" },
-  "B:top":    { f:"U", e:"top" },
-
-  "D:bottom": { f:"B", e:"bottom" },
-  "B:bottom": { f:"D", e:"bottom" },
-
-  "L:left":   { f:"B", e:"right" },
-  "B:right":  { f:"L", e:"left" },
-
-  "R:right":  { f:"B", e:"left" },
-  "B:left":   { f:"R", e:"right" },
-};
-
-// edge -> sticker indices (three stickers on that edge)
-const EDGE_IDXS = {
-  top:    [0,1,2],
-  right:  [2,5,8],
-  bottom: [6,7,8],
-  left:   [0,3,6],
-};
-
-function faceEl(f){ return document.getElementById(`face-${f}`); }
-
-function highlightEdge(face, edge){
-  // face glow
-  faceEl(face).classList.add("focus");
-
-  // sticker glow on that edge
-  const idxs = EDGE_IDXS[edge];
-  const stickers = faceEl(face).querySelectorAll(".sticker");
-  idxs.forEach(i => stickers[i].classList.add("edgeOn"));
-}
-
-function clearEdgeHighlight(){
-  for(const f of ["U","D","F","B","L","R"]){
-    faceEl(f).classList.remove("focus");
-    faceEl(f).querySelectorAll(".sticker.edgeOn").forEach(s=>s.classList.remove("edgeOn"));
-  }
-  // hide lines
-  document.querySelectorAll(".link").forEach(p=>p.classList.remove("on"));
-}
-
-function onEdgeEnter(e){
-  const face = e.currentTarget.dataset.face;
-  const edge = e.currentTarget.dataset.edge;
-  clearEdgeHighlight();
-
-  const key = `${face}:${edge}`;
-  const pair = EDGE_MAP[key];
-
-  highlightEdge(face, edge);
-  if(pair) highlightEdge(pair.f, pair.e);
-
-  // show link line
-  const id = linkId(face, edge, pair?.f, pair?.e);
-  if(id){
-    const path = document.getElementById(id);
-    if(path) path.classList.add("on");
+/* ===== Render ===== */
+function renderFace(face){
+  const el = document.getElementById(`face-${face}`);
+  el.innerHTML = "";
+  for(let i=0;i<9;i++){
+    const s = document.createElement("div");
+    s.className = "sticker";
+    const code = cube[face][i];
+    s.style.background = `linear-gradient(180deg, ${COLOR[code]}, rgba(0,0,0,0.18))`;
+    el.appendChild(s);
   }
 }
-
-function linkId(f1,e1,f2,e2){
-  if(!f2) return null;
-  const a = `${f1}:${e1}`;
-  const b = `${f2}:${e2}`;
-  // stable order
-  return "link-" + [a,b].sort().join("__").replaceAll(":","-");
+function render(){
+  for(const f of ["U","D","F","B","L","R"]) renderFace(f);
 }
 
-/** SVG link lines (optional) */
-function rebuildLinkSVG(){
-  const svg = document.getElementById("links");
-  svg.innerHTML = "";
-  const show = document.getElementById("toggleLinks")?.checked ?? true;
-  svg.style.display = show ? "block" : "none";
-  if(!show) return;
-
-  const stage = document.querySelector(".stage");
-  const srect = stage.getBoundingClientRect();
-
-  // Build unique links from EDGE_MAP (paired)
-  const seen = new Set();
-  for(const k in EDGE_MAP){
-    const a = k;
-    const b = `${EDGE_MAP[k].f}:${EDGE_MAP[k].e}`;
-    const key = [a,b].sort().join("|");
-    if(seen.has(key)) continue;
-    seen.add(key);
-
-    const [f1,e1] = a.split(":");
-    const [f2,e2] = b.split(":");
-
-    const p1 = edgeCenterPoint(f1,e1,srect);
-    const p2 = edgeCenterPoint(f2,e2,srect);
-    if(!p1 || !p2) continue;
-
-    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
-    path.setAttribute("class","link");
-    path.setAttribute("id", linkId(f1,e1,f2,e2));
-
-    // nice curve
-    const dx = (p2.x - p1.x);
-    const dy = (p2.y - p1.y);
-    const c1 = { x: p1.x + dx*0.35, y: p1.y + dy*0.05 };
-    const c2 = { x: p1.x + dx*0.65, y: p1.y + dy*0.95 };
-    const d = `M ${p1.x} ${p1.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p2.x} ${p2.y}`;
-    path.setAttribute("d", d);
-
-    svg.appendChild(path);
-  }
-
-  svg.setAttribute("viewBox", `0 0 ${srect.width} ${srect.height}`);
-  svg.setAttribute("preserveAspectRatio","none");
-}
-
-function edgeCenterPoint(face, edge, stageRect){
-  const el = faceEl(face);
-  if(!el) return null;
-  const rect = el.getBoundingClientRect();
-  // face inner content area is basically the padding box; we approximate using rect.
-  let x = rect.left + rect.width/2;
-  let y = rect.top + rect.height/2;
-  const inset = 18; // roughly padding area
-  if(edge === "top")    y = rect.top + inset;
-  if(edge === "bottom") y = rect.bottom - inset;
-  if(edge === "left")   x = rect.left + inset;
-  if(edge === "right")  x = rect.right - inset;
-
-  return { x: x - stageRect.left, y: y - stageRect.top };
-}
-
-/** controls */
+/* ===== Controls ===== */
 const MOVE_KEYS = ["R","L","U","D","F","B"];
 const moveButtons = document.getElementById("moveButtons");
 for(const m of MOVE_KEYS){
@@ -526,7 +456,8 @@ for(const m of MOVE_KEYS){
 }
 
 document.getElementById("btnReset").onclick = ()=>{
-  cube = solvedCube(); moveCounter = 0;
+  cube = solvedCube();
+  moveCounter = 0;
   document.getElementById("moveCount").textContent = `Moves: ${moveCounter}`;
   render();
 };
@@ -559,8 +490,11 @@ async function runSequence(seq, delayMs=0){
 document.getElementById("btnRun").onclick = ()=> runSequence(document.getElementById("seq").value, 0);
 document.getElementById("btnRunSlow").onclick = ()=> runSequence(document.getElementById("seq").value, 160);
 
-document.getElementById("toggleLinks").addEventListener("change", rebuildLinkSVG);
-window.addEventListener("resize", ()=> setTimeout(rebuildLinkSVG, 0));
+document.getElementById("toggleBack").addEventListener("change", (e)=>{
+  const on = e.target.checked;
+  const b = document.getElementById("face-B");
+  b.style.display = on ? "grid" : "none";
+});
 
 render();
 </script>
